@@ -2,26 +2,32 @@ import Link from "next/link";
 
 export default function NotFound() {
   return (
-    <div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4 space-y-6">
-      <div className="w-24 h-24 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center text-5xl shadow-inner border border-rose-100">
-        404
-      </div>
-
-      <div className="space-y-2 max-w-md">
-        <h1 className="text-3xl font-extrabold text-slate-900">পেজটি পাওয়া যায়নি</h1>
-        <p className="text-slate-600 text-sm leading-relaxed">
-          আপনি যে পেজ বা প্রোডাক্টটি খুঁজছেন তা মুছে ফেলা হয়েছে অথবা ভুল লিংক প্রবেশ করিয়েছেন।
+    <main className="flex min-h-[80vh] items-center justify-center bg-[#f7f9f5] px-4 py-12">
+      {" "}
+      <div className="w-full max-w-lg text-center">
+        {" "}
+        <div className="mb-6 text-7xl">🛒</div>
+        <p className="text-sm font-bold uppercase tracking-[0.25em] text-green-700">
+          Error 404
         </p>
-      </div>
-
-      <div>
+        <h1 className="mt-4 text-3xl font-extrabold text-gray-900 sm:text-4xl">
+          পেজটি খুঁজে পাওয়া যায়নি!
+        </h1>
+        <p className="mx-auto mt-4 max-w-md leading-7 text-gray-600">
+          দুঃখিত! আপনি যে পেজটি খুঁজছেন, সেটি হয়তো সরিয়ে ফেলা হয়েছে অথবা
+          ঠিকানাটি ভুল হয়েছে।
+        </p>
         <Link
           href="/"
-          className="inline-block bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-6 py-3 rounded-xl shadow-md transition transform hover:-translate-y-0.5 text-sm"
+          className="mt-8 inline-flex items-center gap-2 rounded-xl bg-green-700 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-green-800"
         >
-          হোম পেজে ফিরে যান
+          <span>←</span>
+          হোমপেজে ফিরে যান
         </Link>
+        <p className="mt-8 text-sm text-gray-400">
+          বাজার দর — নিত্যপণ্যের দাম এক নজরে
+        </p>
       </div>
-    </div>
+    </main>
   );
 }

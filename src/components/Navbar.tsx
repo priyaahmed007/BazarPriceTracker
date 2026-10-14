@@ -1,164 +1,273 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
-import { PRODUCTS_DATA, toBengaliNumber } from "@/lib/data";
+import { useEffect, useState } from "react";
+import { authClient } from "@/lib/auth-client";
+import { toast } from "react-toastify";
+import Image from "next/image";
 
-const CATEGORIES = [
-  { slug: "all", name: "সব পণ্য" },
-  { slug: "chal", name: "চাল" },
-  { slug: "sobji", name: "সবজি" },
-  { slug: "mach-mangsho", name: "মাছ ও মাংস" },
-  { slug: "dhim-tel", name: "ডিম ও তেল" },
-  { slug: "mosla", name: "মসলা" },
+const categories = [
+  { name: "চাল", slug: "chal", icon: "🍚" },
+  { name: "ডাল", slug: "dal", icon: "🫘" },
+  { name: "তেল", slug: "tel", icon: "🛢️" },
+  { name: "সবজি", slug: "sobji", icon: "🥬" },
+  { name: "মাছ", slug: "mach", icon: "🐟" },
+  { name: "মাংস", slug: "mangsho", icon: "🍗" },
+  { name: "ডিম-দুধ", slug: "dim-dui", icon: "🥛" },
+  { name: "মসলা", slug: "mosla", icon: "🌶️" },
 ];
 
 export default function Navbar() {
-  const pathname = usePathname();
   const router = useRouter();
-  const { user, isLoading, logout } = useAuth();
-  const [formattedDate, setFormattedDate] = useState("");
+  const pathname = usePathname();
+  const { data: session, isPending } = authClient.useSession();
 
-  const handleLogout = useCallback(async () => {
-    await logout();
-    router.push("/");
-    router.refresh();
-  }, [logout, router]);
+  const [signingOut, setSigningOut] = useState(false);
+  const [banglaDate, setBanglaDate] = useState("");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      const today = new Date();
-      const dateStr = new Intl.DateTimeFormat("bn-BD", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      }).format(today);
-      setFormattedDate(dateStr);
-    }, 0);
-    return () => window.clearTimeout(timer);
+    const today = new Intl.DateTimeFormat("bn-BD", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      timeZone: "Asia/Dhaka",
+    }).format(new Date());
+
+    setBanglaDate(today);
   }, []);
 
+  useEffect(() => {
+    setDropdownOpen(false);
+  }, [pathname]);
+
+  async function handleSignOut() {
+    setSigningOut(true);
+
+    try {
+      const result = await authClient.signOut();
+
+      if (result.error) {
+        toast.error("Sign out করা যায়নি। আবার চেষ্টা করো।");
+        return;
+      }
+
+      setDropdownOpen(false);
+      toast.success("সফলভাবে Sign out হয়েছে!");
+      router.push("/");
+      router.refresh();
+    } catch {
+      toast.error("সমস্যা হয়েছে। আবার চেষ্টা করো।");
+    } finally {
+      setSigningOut(false);
+    }
+  }
+
+  const user = session?.user;
+  const userName = user?.name?.trim() || "ব্যবহারকারী";
+  const userEmail = user?.email || "";
+  const avatarLetter = userName.charAt(0).toUpperCase();
+
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-emerald-100 shadow-sm">
-      {/* Top Main Navbar */}
-      <div className="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
-        {/* Left Logo & Date */}
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="bg-emerald-600 text-white p-2.5 rounded-xl shadow-sm group-hover:scale-105 transition-transform">
-            <span className="text-2xl">🛒</span>
-          </div>
-          <div>
-            <h1 className="text-2xl font-extrabold text-slate-800 flex items-center gap-1.5">
+    <header className="relative z-30 border-b border-green-100 bg-white/95 shadow-sm backdrop-blur">
+      {/* Logo and authentication */}
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-5 py-4">
+        <Link
+          href="/"
+          className="flex shrink-0 items-center gap-2.5 text-green-800"
+        >
+          {/* Logo */}
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-green-700 text-2xl text-white">
+            🛒
+          </span>
+
+          {/* Title and date */}
+          <span className="flex flex-col justify-center gap-0.5">
+            <span className="text-[22px] leading-tight font-extrabold tracking-tight text-black">
               বাজার দর
-            </h1>
-            <p className="text-xs text-emerald-700 font-medium h-4">
-              {formattedDate}
-            </p>
-          </div>
+            </span>
+
+            <span className="text-xs leading-4 font-medium text-gray-600">
+              {banglaDate || "তারিখ লোড হচ্ছে..."}
+            </span>
+          </span>
         </Link>
 
-        {/* Right Auth Buttons / User Profile */}
         <div className="flex items-center gap-3">
-          {isLoading ? (
-            <div className="h-9 w-24 rounded-lg bg-slate-100 animate-pulse" aria-hidden="true" />
+          {isPending ? (
+            <div className="h-10 w-28 animate-pulse rounded-xl bg-gray-100" />
           ) : user ? (
-            <div className="flex items-center gap-3">
-              <Link
-                href="/profile"
-                className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg hover:bg-emerald-100 transition"
+            <div className="relative z-[70]">
+              {/* User dropdown trigger */}
+              <button
+                type="button"
+                onClick={() => setDropdownOpen((open) => !open)}
+                aria-expanded={dropdownOpen}
+                aria-haspopup="menu"
+                aria-label="User menu"
+                className="flex items-center gap-2 rounded-xl px-2 py-1.5 transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-600"
               >
                 {user.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  <Image
                     src={user.image}
-                    alt={user.name}
-                    className="w-8 h-8 rounded-full object-cover"
+                    alt={userName}
+                    width={40}
+                    height={40}
+                    className="h-10 w-10 rounded-full border border-green-100 object-cover"
+                    unoptimized
                   />
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-sm">
-                    {user.name ? user.name.charAt(0).toUpperCase() : "U"}
-                  </div>
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-green-100 bg-green-100 text-sm font-bold text-green-800">
+                    {avatarLetter}
+                  </span>
                 )}
-                <span className="text-sm font-semibold text-slate-800 hidden sm:inline">
-                  {user.name}
+
+                <span className="hidden max-w-36 truncate text-sm font-semibold text-gray-800 sm:block">
+                  {userName}
                 </span>
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-700 font-medium px-3.5 py-1.5 rounded-lg text-sm transition"
-              >
-                সাইন আউট
+
+                <svg
+                  className={`h-4 w-4 text-gray-500 transition-transform ${
+                    dropdownOpen ? "rotate-180" : ""
+                  }`}
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5.22 7.22a.75.75 0 011.06 0L10 10.94l3.72-3.72a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.22 8.28a.75.75 0 010-1.06z"
+                    clipRule="evenodd"
+                  />
+                </svg>
               </button>
+
+              {/* Dropdown menu */}
+              {dropdownOpen && (
+                <>
+                  <button
+                    type="button"
+                    aria-label="Close user menu"
+                    className="fixed inset-0 z-[101] cursor-default"
+                    onClick={() => setDropdownOpen(false)}
+                  />
+
+                  <div
+                    role="menu"
+                    className="absolute right-0 z-[102] mt-3 w-72 max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl"
+                  >
+                    {/* User information */}
+                    <div className="border-b border-gray-100 bg-gray-50 px-4 py-4">
+                      <p className="truncate text-sm font-bold text-gray-900">
+                        {userName}
+                      </p>
+                      <p className="mt-1 truncate text-xs text-gray-500">
+                        {userEmail}
+                      </p>
+                    </div>
+
+                    {/* Profile */}
+                    <div className="p-2">
+                      <Link
+                        href="/profile"
+                        role="menuitem"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-gray-700 transition hover:bg-green-50 hover:text-green-800"
+                      >
+                        <svg
+                          className="h-5 w-5"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          aria-hidden="true"
+                        >
+                          <circle cx="12" cy="8" r="4" />
+                          <path d="M5 21v-2a7 7 0 0114 0v2" />
+                        </svg>
+                        আমার প্রোফাইল
+                      </Link>
+
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={handleSignOut}
+                        disabled={signingOut}
+                        className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        <svg
+                          className="h-5 w-5"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          aria-hidden="true"
+                        >
+                          <path d="M10 17l5-5-5-5" />
+                          <path d="M15 12H3" />
+                          <path d="M12 3h6a2 2 0 012 2v14a2 2 0 01-2 2h-6" />
+                        </svg>
+                        {signingOut ? "অপেক্ষা করো..." : "সাইন আউট"}
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <>
               <Link
                 href="/signin"
-                className="text-slate-700 hover:text-emerald-600 font-semibold px-3 py-1.5 text-sm rounded-lg hover:bg-slate-50 transition"
+                className="rounded-xl border border-green-700 px-4 py-2 text-sm font-semibold text-green-700 transition hover:bg-green-50"
               >
                 সাইন ইন
               </Link>
+
               <Link
                 href="/signup"
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-1.5 rounded-lg text-sm shadow-sm transition"
+                className="rounded-xl bg-green-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-800"
               >
                 সাইন আপ
               </Link>
-            </div>
+            </>
           )}
         </div>
       </div>
 
-      {/* Middle Category Nav */}
-      <nav className="bg-slate-50 border-t border-slate-200/60 overflow-x-auto scrollbar-none">
-        <div className="max-w-6xl mx-auto px-4 flex items-center space-x-1 py-1.5 text-sm">
-          {CATEGORIES.map((cat) => {
-            const href = cat.slug === "all" ? "/#সব-পণ্য" : `/category/${cat.slug}`;
-            const isActive =
-              cat.slug !== "all" && pathname.startsWith(`/category/${cat.slug}`);
+      <div className="border-t border-gray-100" />
 
-            return (
-              <Link
-                key={cat.slug}
-                href={href}
-                className={`px-3.5 py-1.5 rounded-md whitespace-nowrap transition-colors font-medium ${
-                  isActive
-                    ? "bg-emerald-600 text-white shadow-sm"
-                    : "text-slate-700 hover:bg-emerald-50 hover:text-emerald-700"
-                }`}
-              >
-                {cat.name}
-              </Link>
-            );
-          })}
-        </div>
+      {/* Category navigation */}
+
+      <nav
+        aria-label="পণ্যের ক্যাটাগরি"
+        className="mx-auto flex max-w-7xl gap-2 overflow-x-auto px-5 py-2"
+      >
+        {categories.map((category) => {
+          const href = category.slug ? `/category/${category.slug}` : "/";
+
+          const isActive = category.slug
+            ? pathname === href || pathname.startsWith(`${href}/`)
+            : pathname === "/";
+
+          return (
+            <Link
+              key={category.slug || "all"}
+              href={href}
+              aria-current={isActive ? "page" : undefined}
+              className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold transition ${
+                isActive
+                  ? "bg-green-700 text-white shadow-sm"
+                  : "text-gray-700 hover:bg-green-50 hover:text-green-800"
+              }`}
+            >
+              <span aria-hidden="true">{category.icon}</span>
+              <span>{category.name}</span>
+            </Link>
+          );
+        })}
       </nav>
-
-      {/* Infinite Price Ticker Marquee */}
-      <div className="bg-emerald-900 text-emerald-100 text-xs py-1.5 overflow-hidden shadow-inner">
-        <div className="animate-marquee whitespace-nowrap flex items-center space-x-6">
-          {[...PRODUCTS_DATA, ...PRODUCTS_DATA].map((item, idx) => {
-            const isRising = item.is_rising;
-            return (
-              <div key={idx} className="inline-flex items-center space-x-1.5 px-2">
-                <span>{item.emoji}</span>
-                <span className="font-semibold text-white">{item.name}:</span>
-                <span>{toBengaliNumber(item.price)} টাকা/{item.unit.replace("প্রতি ", "")}</span>
-                <span
-                  className={`px-1 rounded text-[10px] font-bold ${
-                    isRising ? "bg-emerald-700 text-emerald-200" : "bg-rose-800 text-rose-200"
-                  }`}
-                >
-                  {isRising ? "▲" : "▼"} {toBengaliNumber(Math.abs(item.change))}%
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
     </header>
   );
 }

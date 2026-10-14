@@ -1,12 +1,7 @@
 import { createAuthClient } from "better-auth/react";
-
-/**
- * Browser Better Auth client.
- * No `baseURL` is passed on purpose: Better Auth falls back to the current
- * origin, so the same code works on localhost, Vercel preview and production.
- */
 export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL,
+  /** The base URL of the server (optional if you're using the same domain) */
+  baseURL: process.env.BETTER_AUTH_URL,
 });
 
-export const { useSession, signIn, signUp, signOut, updateUser } = authClient;
+export const { signIn, signUp, signOut, useSession } = createAuthClient();

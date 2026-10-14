@@ -1,99 +1,145 @@
 "use client";
 
 import { useEffect } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import toast from "react-hot-toast";
-import { useAuth } from "@/context/AuthContext";
+import Link from "next/link";
+import { toast } from "react-toastify";
+import { authClient, signOut } from "@/lib/auth-client";
 
 export default function ProfilePage() {
-  const { user, isLoading, logout } = useAuth();
   const router = useRouter();
+  const { data: session, isPending } = authClient.useSession();
 
   useEffect(() => {
-    if (!isLoading && !user) {
-      toast.error("প্রোফাইল দেখতে অনুগ্রহ করে আগে সাইন ইন করুন!");
-      router.replace("/signin?redirect=%2Fprofile");
+    if (!isPending && !session) {
+      router.replace("/signin");
     }
-  }, [user, isLoading, router]);
+  }, [isPending, session, router]);
 
-  if (isLoading) {
+  async function handleSignOut() {
+    try {
+      await signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            toast.success("সাইন আউট সফল হয়েছে।");
+            router.push("/signin");
+            router.refresh();
+          },
+          onError: () => {
+            toast.error("সাইন আউট করা যায়নি।");
+          },
+        },
+      });
+    } catch {
+      toast.error("সমস্যা হয়েছে। আবার চেষ্টা করো।");
+    }
+  }
+
+  if (isPending || !session?.user) {
     return (
-      <div className="max-w-2xl mx-auto py-10 space-y-4 animate-pulse">
-        <div className="h-32 bg-slate-200 rounded-3xl"></div>
-        <div className="h-40 bg-slate-200 rounded-3xl"></div>
-      </div>
+      <main className="min-h-screen bg-[#F1F6F1] px-4 py-16">
+        <div className="mx-auto max-w-[830px] animate-pulse">
+          <div className="h-8 w-48 rounded bg-gray-200" />
+          <div className="mt-8 h-32 rounded-[18px] bg-white" />
+          <div className="mt-6 h-64 rounded-[18px] bg-white" />
+        </div>
+      </main>
     );
   }
 
-  if (!user) return null;
-
-  const handleLogout = async () => {
-    await logout();
-    router.push("/");
-    router.refresh();
-  };
+  const user = session.user;
 
   return (
-    <div className="max-w-2xl mx-auto py-8">
-      <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm space-y-6">
-        <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-slate-100">
-          {user.image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={user.image}
-              alt={user.name}
-              className="w-24 h-24 rounded-full object-cover shadow-md"
-            />
-          ) : (
-            <div className="w-24 h-24 rounded-full bg-emerald-600 text-white flex items-center justify-center text-4xl font-extrabold shadow-md">
-              {user.name ? user.name.charAt(0).toUpperCase() : "U"}
-            </div>
-          )}
-          <div className="text-center sm:text-left space-y-1">
-            <h1 className="text-2xl font-extrabold text-slate-900">{user.name}</h1>
-            <p className="text-sm text-slate-500 font-medium">{user.email}</p>
-            <span className="inline-block text-xs font-semibold px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full mt-2">
-              নিয়মিত ব্যবহারকারী
-            </span>
+    <main className="min-h-screen bg-[#F1F6F1] px-4 pb-10 sm:px-6">
+      <div className="mx-auto max-w-[830px]">
+        {/* Profile avatar */}
+        <div className="flex justify-center">
+          <div className="flex h-[110px] w-[110px] items-center justify-center overflow-hidden rounded-b-none bg-[#D9D9D9] text-4xl font-bold text-[#202820]">
+            {user.image ? (
+              <img
+                src={user.image}
+                alt="Profile"
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              user.name?.charAt(0).toUpperCase() || "U"
+            )}
           </div>
         </div>
 
-        <div className="space-y-4">
-          <h2 className="text-lg font-bold text-slate-800">অ্যাকাউন্ট তথ্য</h2>
-          <div className="bg-slate-50 p-4 rounded-2xl space-y-3 border border-slate-100 text-sm">
-            <div className="flex justify-between border-b border-slate-200/60 pb-2">
-              <span className="text-slate-500">নাম:</span>
-              <span className="font-semibold text-slate-800">{user.name}</span>
+        {/* Heading */}
+        <header className="mb-7 mt-7">
+          <h1 className="text-2xl font-extrabold tracking-tight text-[#202820] sm:text-3xl">
+            আমার প্রোফাইল
+          </h1>
+          <p className="mt-1 text-sm text-[#667067] sm:text-base">
+            আপনার অ্যাকাউন্টের তথ্য এখানে দেখুন।
+          </p>
+        </header>
+
+        {/* Account summary */}
+        <section className="flex flex-col gap-5 rounded-[18px] border border-[#DFE7DF] bg-[#FAFCFA] p-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-7">
+          <div className="flex min-w-0 items-center gap-4">
+            <div className="flex h-[76px] w-[76px] shrink-0 items-center justify-center overflow-hidden rounded-[18px] bg-[#F0F5F0] text-3xl font-bold text-green-800">
+              {user.image ? (
+                <img
+                  src={user.image}
+                  alt="Profile"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                user.name?.charAt(0).toUpperCase() || "U"
+              )}
             </div>
-            <div className="flex justify-between border-b border-slate-200/60 pb-2">
-              <span className="text-slate-500">ইমেইল:</span>
-              <span className="font-semibold text-slate-800">{user.email}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500">স্ট্যাটাস:</span>
-              <span className="font-bold text-emerald-600">সক্রিয়</span>
+
+            <div className="min-w-0">
+              <h2 className="truncate text-lg font-bold text-[#202820] sm:text-xl">
+                {user.name || "নাম দেওয়া হয়নি"}
+              </h2>
+              <p className="mt-1 break-all text-sm text-[#667067] sm:text-base">
+                {user.email}
+              </p>
             </div>
           </div>
-        </div>
 
-        {/* C3. Challenge action — opens the update information form */}
-        <div className="pt-2 flex flex-col sm:flex-row justify-end gap-3">
           <button
             type="button"
-            onClick={handleLogout}
-            className="rounded-xl border border-slate-200 px-6 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-rose-50 hover:text-rose-600"
+            onClick={handleSignOut}
+            className="shrink-0 self-start rounded-[10px] border border-red-400 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 sm:self-center"
           >
+            <span aria-hidden="true">↩ </span>
             সাইন আউট
           </button>
-          <Link
-            href="/profile/edit"
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-xl shadow-sm text-sm transition text-center"
-          >
-            তথ্য আপডেট করুন
-          </Link>
-        </div>
+        </section>
+
+        {/* Profile information */}
+        <section className="mt-6 min-h-[270px] rounded-[18px] border border-[#DFE7DF] bg-[#FAFCFA] p-5 sm:px-6 sm:py-7">
+          <h2 className="text-lg font-bold text-[#202820]">তথ্য</h2>
+
+          <div className="mt-10 px-1 sm:px-6">
+            <label
+              htmlFor="profile-name"
+              className="mb-2 block text-sm font-medium text-[#303830]"
+            >
+              নাম
+            </label>
+
+            <div
+              id="profile-name"
+              className="flex min-h-[44px] items-center rounded-[10px] border border-[#DFE7DF] bg-[#FAFCFA] px-3.5 py-2.5 text-sm text-[#202820]"
+            >
+              {user.name || "নাম দেওয়া হয়নি"}
+            </div>
+
+            <Link
+              href="/profile/update"
+              className="mt-4 block w-full rounded-[10px] bg-[#07883F] px-4 py-3 text-center text-sm font-bold text-white shadow-[0_3px_4px_rgba(0,0,0,0.18)] transition hover:bg-[#067535]"
+            >
+              আপডেট
+            </Link>
+          </div>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }

@@ -1,149 +1,153 @@
-"use client";
+import Link from "next/link";
+import { getProducts } from "@/lib/api";
 
-import { useEffect, useMemo, useState } from "react";
-import Image from "next/image";
-import ProductCard from "@/components/ProductCard";
-import SkeletonCard from "@/components/SkeletonCard";
-import { fetchProducts } from "@/lib/api";
-import { CATEGORIES_DATA, Product } from "@/lib/data";
+function formatPrice(price: number) {
+  return new Intl.NumberFormat("bn-BD").format(price);
+}
 
-export default function HomePage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("all");
+export default async function HomePage() {
+  let products: IProduct[] = [];
 
-  useEffect(() => {
-    async function loadData() {
-      setLoading(true);
-      const data = await fetchProducts();
-      setProducts(data);
-      setLoading(false);
-    }
-    loadData();
-  }, []);
+  try {
+    products = await getProducts();
+  } catch (error) {
+    console.error("Products loading failed:", error);
+  }
 
-  const risers = products.filter((p) => p.is_rising).slice(0, 6);
-  const fallers = products.filter((p) => !p.is_rising).slice(0, 6);
-  const visibleProducts = useMemo(() => products.filter((product) => {
-    const matchesCategory = category === "all" || product.category === category;
-    const searchText = `${product.name} ${product.category_name}`.toLocaleLowerCase("bn-BD");
-    return matchesCategory && searchText.includes(query.trim().toLocaleLowerCase("bn-BD"));
-  }), [products, category, query]);
+  const risingProducts = products
+    .filter((product) => product.change.dir === "up")
+    .slice(0, 6);
+
+  const fallingProducts = products
+    .filter((product) => product.change.dir === "down")
+    .slice(0, 6);
 
   return (
-    <div className="space-y-12">
-      {/* 2. Hero Banner Section */}
-      <section className="bg-gradient-to-r from-emerald-800 to-emerald-600 rounded-3xl p-8 md:p-12 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden">
-        <div className="max-w-xl space-y-4 z-10 text-center md:text-left">
-          <span className="inline-block bg-emerald-500/30 text-emerald-100 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-            সঠিক বাজার দর জানুন
-          </span>
-          <h1 className="text-3xl md:text-5xl font-extrabold leading-tight">
-            বাংলাদেশের নিত্যপ্রয়োজনীয় পণ্যের সঠিক দাম এক নজরে
-          </h1>
-          <p className="text-emerald-100 text-sm md:text-base leading-relaxed">
-            প্রতিদিনের বাজার দর, দরদাম উঠানামার হিসাব এবং বিভিন্ন বাজারের নিখুঁত পর্যবেক্ষণ নিয়ে আমাদের প্ল্যাটফর্ম।
+    <main className="min-h-screen bg-[#f8faf5] text-[#183b2b]">
+      <div className="bg-[#F1F6F1]">
+        {/* Hero */}
+        <section className="mx-auto max-w-7xl px-5 py-6 sm:py-8">
+          <div className="grid min-h-[300px] items-center gap-6 overflow-hidden rounded-[28px] border border-[#dfe8df] bg-[#f9fcf9] px-5 py-8 sm:px-8 md:grid-cols-[1.5fr_0.7fr] md:px-12 md:py-10 lg:min-h-[335px] lg:px-14">
+            {/* Left content */}
+            <div className="relative z-10">
+              <p className="mb-4 inline-flex rounded-full bg-[#e2f3e8] px-4 py-2 text-sm font-semibold text-green-700">
+                {new Intl.DateTimeFormat("bn-BD", {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                  timeZone: "Asia/Dhaka",
+                }).format(new Date())}
+              </p>
+
+              <h1 className="max-w-3xl text-3xl leading-tight font-extrabold tracking-tight text-[#202b23] sm:text-4xl lg:text-5xl">
+                আজকের বাজারের দাম এক নজরে
+              </h1>
+
+              <p className="mt-5 max-w-2xl text-sm leading-7 text-gray-600 sm:text-base sm:leading-8">
+                চাল, ডাল, তেল, সবজি, মাছ, মাংস, ডিম ও মসলার দাম — বাজারভিত্তিক
+                বিস্তার, গড়, সর্বনিম্ন-সর্বোচ্চ এবং দামের পরিবর্তন এক জায়গায়।
+              </p>
+
+              <a
+                href="#সব-পণ্য"
+                className="mt-7 inline-flex items-center rounded-xl bg-green-700 px-7 py-3 font-bold text-white shadow-md transition hover:bg-green-800"
+              >
+                সব পণ্য দেখুন
+              </a>
+            </div>
+
+            {/* Hero image */}
+            <div className="flex items-center justify-center md:justify-end">
+              <Image
+                src="/assets/images/bazar-hero.png"
+                alt="বাজারের তাজা পণ্য"
+                width={400}
+                height={300}
+                priority
+                className="h-auto max-h-[240px] w-full max-w-[300px] object-contain sm:max-h-[270px] sm:max-w-[340px] lg:max-h-[290px]"
+              />
+            </div>
+          </div>
+        </section>
+      </div>
+
+      {products.length === 0 ? (
+        <section className="mx-auto max-w-7xl px-5 py-16 text-center">
+          <p className="text-lg font-semibold">পণ্যের তথ্য লোড করা যায়নি।</p>
+          <p className="mt-2 text-sm text-gray-500">
+            ইন্টারনেট সংযোগ ও API ঠিক আছে কি না যাচাই করো।
           </p>
-          <div className="pt-2">
-            <a
-              href="#সব-পণ্য"
-              className="inline-block bg-white text-emerald-800 font-extrabold px-6 py-3.5 rounded-xl shadow-lg hover:bg-emerald-50 transition transform hover:-translate-y-0.5"
-            >
-              সব পণ্য দেখুন ↓
-            </a>
-          </div>
-        </div>
+        </section>
+      ) : (
+        <>
+          <ProductSection title="আজ দাম বেড়েছে" products={risingProducts} />
+          <ProductSection title="আজ দাম কমেছে" products={fallingProducts} />
+          <ProductSection
+            title="সব পণ্য"
+            subtitle={`মোট ${formatPrice(products.length)}টি পণ্য দেখানো হচ্ছে`}
+            products={products}
+            id="সব-পণ্য"
+          />
+        </>
+      )}
+    </main>
+  );
+}
 
-        {/* Banner Right Image / Illustration */}
-        <div className="w-full md:w-80 flex items-center justify-center z-10">
-          <div className="w-60 h-60 md:w-64 md:h-64 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center p-8 shadow-inner border border-white/20">
-            <Image
-              src="/bazar-hero.png"
-              alt="বাজার দরে নিত্যপ্রয়োজনীয় পণ্যের দাম তুলনার illustration"
-              width={236}
-              height={197}
-              priority
-              className="h-auto w-full drop-shadow-xl"
-            />
-          </div>
-        </div>
+import type { IProduct } from "@/lib/types";
+import Image from "next/image";
+import ProductCard from "@/components/ProductCard";
 
-        {/* Decorative Circles */}
-        <div className="absolute -top-10 -right-10 w-64 h-64 bg-white/5 rounded-full blur-2xl"></div>
-        <div className="absolute -bottom-10 -left-10 w-64 h-64 bg-emerald-900/20 rounded-full blur-2xl"></div>
-      </section>
+function ProductSection({
+  title,
+  subtitle,
+  products,
+  id,
+}: {
+  title: string;
+  subtitle?: string;
+  products: IProduct[];
+  id?: string;
+}) {
+  const isRising = title.includes("বেড়েছে");
+  const isFalling = title.includes("কমেছে");
 
-      {/* Section A — আজ দাম বেড়েছে ▲ */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-          <h2 className="text-2xl font-extrabold text-slate-800 flex items-center gap-2">
-            <span className="text-rose-600">▲</span> আজ দাম বেড়েছে
-          </h2>
-          <span className="text-xs text-slate-600 font-medium">সর্বশেষ হালনাগাদ তথ্য</span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
-          {loading
-            ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
-            : risers.map((product) => <ProductCard key={product.id} product={product} />)}
-        </div>
-      </section>
+  return (
+    <section
+      id={id}
+      className="mx-auto max-w-[1440px] px-5 py-6 sm:px-8 sm:py-8"
+    >
+      <div className="mb-5">
+        <h2 className="flex items-center gap-3 text-xl font-extrabold tracking-tight text-[#202820] sm:text-2xl">
+          <span
+            className={
+              isRising
+                ? "text-red-500"
+                : isFalling
+                  ? "text-green-600"
+                  : "text-gray-500"
+            }
+          >
+            {isRising ? "▲" : isFalling ? "▼" : ""}
+          </span>
 
-      {/* Section B — আজ দাম কমেছে ▼ */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-          <h2 className="text-2xl font-extrabold text-slate-800 flex items-center gap-2">
-            <span className="text-emerald-600">▼</span> আজ দাম কমেছে
-          </h2>
-          <span className="text-xs text-slate-600 font-medium">সর্বশেষ হালনাগাদ তথ্য</span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
-          {loading
-            ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
-            : fallers.map((product) => <ProductCard key={product.id} product={product} />)}
-        </div>
-      </section>
+          {title}
+        </h2>
+        {subtitle && <p className="mt-2 text-sm text-gray-500">{subtitle}</p>}
+      </div>
 
-      {/* Section C — সব পণ্য */}
-      <section id="সব-পণ্য" className="space-y-4 pt-4 scroll-mt-24">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between border-b border-slate-200 pb-3 gap-3">
-          <div>
-            <h2 className="text-2xl font-extrabold text-slate-800">সব পণ্য</h2>
-            <p className="text-xs text-slate-600">সকল ক্যাটাগরির নিত্যপ্রয়োজনীয় সামগ্রী</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full sm:w-auto">
-            <label className="sr-only" htmlFor="product-search">পণ্য খুঁজুন</label>
-            <input
-              id="product-search"
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="পণ্যের নাম খুঁজুন..."
-              className="w-full sm:w-56 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-            />
-            <label className="sr-only" htmlFor="product-category">ক্যাটাগরি বাছাই</label>
-            <select
-              id="product-category"
-              value={category}
-              onChange={(event) => setCategory(event.target.value)}
-              className="w-full sm:w-48 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-            >
-              <option value="all">সব ক্যাটাগরি</option>
-              {CATEGORIES_DATA.map((item) => <option key={item.id} value={item.slug}>{item.name}</option>)}
-            </select>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-          {loading
-            ? Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)
-            : visibleProducts.map((product) => <ProductCard key={product.id} product={product} />)}
-        </div>
-        {!loading && visibleProducts.length === 0 && (
-          <p className="rounded-2xl border border-dashed border-slate-300 bg-white py-10 text-center text-slate-500">
-            এই খোঁজে কোনো পণ্য পাওয়া যায়নি। অন্য নাম বা ক্যাটাগরি দিয়ে চেষ্টা করুন।
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {products.length > 0 ? (
+          products.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))
+        ) : (
+          <p className="col-span-full py-8 text-sm text-gray-500">
+            এই বিভাগে এখন কোনো পণ্যের তথ্য পাওয়া যায়নি।
           </p>
         )}
-      </section>
-    </div>
+      </div>
+    </section>
   );
 }

@@ -1,58 +1,69 @@
 import Link from "next/link";
-import { Product, toBengaliNumber } from "@/lib/data";
+import type { IProduct } from "@/lib/types";
 
 interface ProductCardProps {
-  product: Product;
+  product: IProduct;
+}
+
+function formatPrice(price: number) {
+  return new Intl.NumberFormat("bn-BD").format(price);
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const isRising = product.is_rising;
+  const isUp = product.change.dir === "up";
+  const isDown = product.change.dir === "down";
 
   return (
     <Link
       href={`/product/${product.slug}`}
-      className="group bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-emerald-500 transition-all duration-200 flex flex-col justify-between"
+      className="group flex min-h-[168px] flex-col justify-between rounded-[20px] border border-[#DFE7DF] bg-[#FAFCFA] p-4 transition-colors hover:border-[#B9D5BC] sm:p-5"
     >
-      <div>
-        {/* Emoji Icon and Category */}
-        <div className="flex items-center justify-between mb-3">
-          <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">
-            {product.emoji}
-          </div>
-          <span className="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-full">
-            {product.category_name}
-          </span>
+      {/* Product name and icon */}
+      <div className="flex items-center gap-3">
+        <div className="flex h-[58px] w-[58px] shrink-0 items-center justify-center rounded-2xl bg-[#F0F5F0] text-[30px]">
+          {product.image || product.categoryIcon}
         </div>
 
-        {/* Product Name */}
-        <h3 className="text-lg font-bold text-slate-800 group-hover:text-emerald-700 transition-colors mb-1">
-          {product.name}
-        </h3>
+        <div className="min-w-0">
+          <h3 className="truncate text-[17px] font-bold leading-6 text-[#202820] group-hover:text-green-800">
+            {product.nameBn}
+          </h3>
 
-        {/* Unit */}
-        <p className="text-xs text-slate-500 font-medium mb-4">{product.unit}</p>
+          <p className="mt-0.5 text-sm text-[#596159]">
+            {product.unit === "kg"
+              ? "প্রতি কেজি"
+              : product.unit === "piece"
+                ? "প্রতি পিস"
+                : product.unit === "dozen"
+                  ? "প্রতি ডজন"
+                  : `প্রতি ${product.unit}`}
+          </p>
+        </div>
       </div>
 
-      {/* Price Row */}
-      <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+      {/* Price and change badge */}
+      <div className="mt-4 flex items-end justify-between gap-2">
         <div>
-          <span className="text-xs text-slate-600 block">আজকের দাম</span>
-          <span className="text-xl font-extrabold text-slate-900">
-            {toBengaliNumber(product.price)} <span className="text-sm font-medium text-slate-600">টাকা</span>
-          </span>
+          <p className="text-sm text-[#424942]">আজকের দাম</p>
+
+          <p className="mt-0.5 text-xl font-extrabold leading-7 text-[#202820]">
+            {formatPrice(product.today)}{" "}
+            <span className="text-base font-semibold">টাকা</span>
+          </p>
         </div>
 
-        {/* Change Badge */}
-        <div
-          className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 ${
-            isRising
-              ? "bg-rose-50 text-rose-700 border border-rose-200"
-              : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+        <span
+          className={`mb-0.5 inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-bold ${
+            isUp
+              ? "bg-[#F0F5F0] text-red-600"
+              : isDown
+                ? "bg-[#F0F5F0] text-green-700"
+                : "bg-gray-100 text-gray-600"
           }`}
         >
-          <span>{isRising ? "▲" : "▼"}</span>
-          <span>{toBengaliNumber(Math.abs(product.change))}%</span>
-        </div>
+          {isUp ? "▲" : isDown ? "▼" : "—"}
+          {formatPrice(Math.abs(product.change.pct))}%
+        </span>
       </div>
     </Link>
   );

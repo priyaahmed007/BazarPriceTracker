@@ -4,8 +4,6 @@
 
 Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · DaisyUI · Better Auth
 
-[🔗 Live Site](https://market-price-tracker.netlify.app/) · [💻 Repository](https://github.com/priyaahmed007/BazarPriceTracker)
-
 ---
 
 ## 📖 Project Description
@@ -15,10 +13,6 @@ Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · DaisyUI · Better Auth
 Users can explore essential products, search by name, filter products by category, sort prices, and view detailed price information. The application also includes authentication features, protected pages, and profile management to provide a more personalized experience.
 
 The entire interface is designed in Bengali, including Bengali numerals, making the platform more accessible to local users. Its responsive layout supports mobile phones, tablets, and desktop screens.
-
-### 🖼️ Project Preview
-
-![BazarDor Home Page](https://github.com/priyaahmed007/BazarPriceTracker/raw/main/public/bazardor-home.png)
 
 ---
 
@@ -210,12 +204,7 @@ BazarPriceTracker/
 
 ---
 
-## 🚀 Deployment
 
-The application is deployed on Netlify.
-
-- **Live Application:** [BazarDor](https://market-price-tracker.netlify.app/)
-- **Source Code:** [GitHub Repository](https://github.com/priyaahmed007/BazarPriceTracker)
 
 To deploy your own version, import the repository into Vercel, configure the required environment variables, and deploy the application.
 
@@ -227,10 +216,6 @@ To deploy your own version, import the repository into Vercel, configure the req
 
 Frontend Developer | React.js | Next.js | TypeScript
 
-- **GitHub:** [@priyaahmed007](https://github.com/priyaahmed007)
-- **LinkedIn:** [Priya Ahmed](https://linkedin.com/in/priyaahmed007/)
-
----
 
 ## 💙 Acknowledgements
 
